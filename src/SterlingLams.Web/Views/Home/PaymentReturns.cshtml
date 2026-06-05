@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Payment & Returns";
+    ViewData["Description"] = "Sterlin Glams payment methods, returns, refunds, and exchange policy.";
+    Layout = "_Layout";
+}
+
+<!-- Hero -->
+<section class="relative h-56 flex items-center justify-center bg-stone-50">
+    <div class="text-center">
+        <p class="text-xs tracking-[0.4em] uppercase text-neutral-500 mb-4">Legal</p>
+        <h1 class="font-cormorant text-5xl font-light text-neutral-900">Payment &amp; Returns</h1>
+    </div>
+</section>
+
+<section class="py-20 bg-white">
+    <div class="max-w-3xl mx-auto px-6 space-y-16">
+
+        <!-- Payment Policy -->
+        <div>
+            <p class="text-xs tracking-[0.3em] uppercase text-neutral-400 mb-3">Section 1</p>
+            <h2 class="font-cormorant text-4xl font-light text-neutral-900 mb-8">Payment Policy</h2>
+
+            <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-6">
+                <p>
+                    SterlinGlams accepts payments through <strong class="font-normal text-neutral-700">Paystack</strong> using major credit and debit cards, including Visa, Mastercard, and Verve.
+                </p>
+                <p>
+                    All payment transactions are processed securely through Paystack using industry-standard encryption and security protocols designed to protect your personal and financial information. SterlinGlams does not store your complete payment card details on its servers.
+                </p>
+                <p>
+                    Payment must be successfully authorized and received before an order can be processed and shipped. If a payment is declined, cancelled, or otherwise unsuccessful, the order will not be confirmed.
+                </p>
+                <p>
+                    Customers are responsible for ensuring that their payment information is accurate and that sufficient funds are available at the time of purchase.
+                </p>
+            </div>
+
+            <!-- Accepted cards -->
+            <div class="mt-8 flex items-center gap-6">
+                <span class="text-xs tracking-[0.15em] uppercase text-neutral-400">Accepted cards</span>
+                <div class="flex gap-3">
+                    @foreach (var card in new[] { "Visa", "Mastercard", "Verve" })
+                    {
+                        <span class="border border-neutral-200 text-xs text-neutral-600 px-3 py-1.5 tracking-wide">@card</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-neutral-100"></div>
+
+        <!-- Returns Policy -->
+        <div>
+            <p class="text-xs tracking-[0.3em] uppercase text-neutral-400 mb-3">Section 2</p>
+            <h2 class="font-cormorant text-4xl font-light text-neutral-900 mb-8">Returns, Refunds &amp; Exchanges</h2>
+
+            <!-- No returns notice -->
+            <div class="bg-neutral-900 text-white p-6 mb-10">
+                <p class="text-xs tracking-[0.2em] uppercase text-neutral-400 mb-2">Important Notice</p>
+                <p class="text-sm font-light leading-relaxed">
+                    Due to the nature of our products and for hygiene and quality assurance reasons, SterlinGlams does <strong class="font-normal">not</strong> currently accept returns or exchanges once an order has been delivered.
+                </p>
+            </div>
+
+            <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-6">
+                <p>
+                    All items undergo thorough quality inspection, packaging, and verification before shipment to ensure that they are delivered in excellent condition.
+                </p>
+                <p>
+                    Orders cannot be cancelled, refunded, or exchanged once they have been successfully placed and payment has been confirmed.
+                </p>
+                <p>
+                    Customers are encouraged to carefully review their order details before completing checkout.
+                </p>
+            </div>
+        </div>
+
+        <!-- Defective / Incorrect items -->
+        <div class="border-l-2 border-neutral-200 pl-6">
+            <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-4">Incorrect or Defective Items</h3>
+            <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                <p>
+                    If you receive an incorrect item or an item with a manufacturing defect, please contact our Customer Service team <strong class="font-normal text-neutral-700">within 48 hours of delivery</strong> at
+                    <a href="mailto:info@SterlinGlams.com" class="text-neutral-900 hover:underline underline-offset-2">info@SterlinGlams.com</a>,
+                    providing your order number and supporting photographs where applicable.
+                </p>
+                <p>
+                    Claims will be reviewed on a case-by-case basis, and where a claim is verified, SterlinGlams may, at its sole discretion, offer a replacement, store credit, or other appropriate remedy.
+                </p>
+                <p>
+                    SterlinGlams is not responsible for delays, loss, or damage caused by third-party shipping or courier services after the order has been dispatched, except where required by applicable law.
+                </p>
+            </div>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="bg-stone-50 p-8">
+            <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-3">Need Help?</p>
+            <p class="text-sm text-neutral-500 font-light leading-relaxed mb-4">
+                For any questions about your order or these policies, our team is here to help.
+            </p>
+            <a asp-controller="Home" asp-action="Contact"
+               class="inline-block border border-neutral-900 text-neutral-900 text-xs tracking-[0.2em] uppercase px-8 py-3 hover:bg-neutral-900 hover:text-white transition-colors duration-300">
+                Contact Us
+            </a>
+        </div>
+
+    </div>
+</section>

@@ -1,0 +1,249 @@
+@{
+    ViewData["Title"] = "Terms & Conditions";
+    ViewData["Description"] = "Sterlin Glams Terms and Conditions of Sale — your rights and obligations when purchasing from us.";
+    Layout = "_Layout";
+}
+
+<!-- Hero -->
+<section class="relative h-56 flex items-center justify-center bg-stone-50">
+    <div class="text-center">
+        <p class="text-xs tracking-[0.4em] uppercase text-neutral-500 mb-4">Legal</p>
+        <h1 class="font-cormorant text-5xl font-light text-neutral-900">Terms &amp; Conditions</h1>
+    </div>
+</section>
+
+<section class="py-20 bg-white">
+    <div class="max-w-3xl mx-auto px-6">
+
+        <!-- TOC -->
+        <nav class="bg-stone-50 p-6 mb-16">
+            <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-4">Contents</p>
+            <ol class="space-y-2">
+                @foreach (var (num, title) in new[] {
+                    ("1", "Applicability"),
+                    ("2", "Contracting Party"),
+                    ("3", "Formation of Contract"),
+                    ("4", "Product Availability"),
+                    ("5", "Unavailability of Goods"),
+                    ("6", "Prices and Additional Charges"),
+                    ("7", "Payment Terms"),
+                    ("8", "Delivery and Retention of Title"),
+                    ("9", "Warranty and After-Sales Service"),
+                    ("10", "Limitation of Liability"),
+                    ("11", "Governing Law"),
+                    ("12", "Changes to These Terms")
+                })
+                {
+                    <li>
+                        <a href="#clause-@num" class="text-sm text-neutral-500 hover:text-neutral-900 transition-colors font-light">
+                            <span class="text-neutral-300 mr-2">@num.</span>@title
+                        </a>
+                    </li>
+                }
+            </ol>
+        </nav>
+
+        <div class="space-y-14">
+
+            <!-- 1 -->
+            <div id="clause-1">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">1. Applicability</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>These Terms and Conditions ("Terms") apply to all purchases and orders placed through <a href="https://www.sterlinglams.com" class="text-neutral-900 hover:underline underline-offset-2">www.SterlinGlams.com</a> (the "Website").</p>
+                    <p>Please read these Terms carefully before placing an order. By placing an order through the Website, you confirm that:</p>
+                    <ul class="space-y-2 pl-4">
+                        @foreach (var item in new[] {
+                            "You have read, understood, and agree to be bound by these Terms;",
+                            "You are at least 18 years of age or have the consent of a parent or legal guardian;",
+                            "You have the legal capacity to enter into binding contracts."
+                        })
+                        {
+                            <li class="flex items-start gap-3"><span class="mt-1.5 w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0"></span>@item</li>
+                        }
+                    </ul>
+                    <p>Any terms or conditions proposed by a customer that differ from these Terms shall not apply unless expressly agreed to by SterlinGlams in writing.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 2 -->
+            <div id="clause-2">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">2. Contracting Party</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>The Website is owned and operated by SterlinGlams ("SterlinGlams," "we," "us," or "our").</p>
+                    <p>For customer support, inquiries, or complaints, you may contact us at:<br>
+                        <strong class="font-normal text-neutral-700">Email:</strong>
+                        <a href="mailto:info@SterlinGlams.com" class="text-neutral-900 hover:underline underline-offset-2">info@SterlinGlams.com</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 3 -->
+            <div id="clause-3">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">3. Formation of Contract</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>All orders placed through the Website constitute an offer to purchase products from SterlinGlams.</p>
+                    <p>Upon receipt of your order, we may acknowledge receipt by email; however, such acknowledgment does not constitute acceptance of your order.</p>
+                    <p>A binding contract is formed only when we accept your order by dispatching the products to you. SterlinGlams reserves the right to refuse or cancel any order for any lawful reason, including product unavailability, pricing errors, suspected fraud, or violations of these Terms.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 4 -->
+            <div id="clause-4">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">4. Product Availability</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>All products displayed on the Website are subject to availability. SterlinGlams reserves the right to:</p>
+                    <ul class="space-y-2 pl-4">
+                        @foreach (var item in new[] {
+                            "Modify, discontinue, or replace products without prior notice;",
+                            "Limit quantities available for purchase;",
+                            "Refuse orders where there is reasonable suspicion of fraudulent, unlawful, or unauthorized activity."
+                        })
+                        {
+                            <li class="flex items-start gap-3"><span class="mt-1.5 w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0"></span>@item</li>
+                        }
+                    </ul>
+                    <p>We shall not be liable for any losses resulting from product unavailability.</p>
+                    <p>Products purchased through the Website are intended for personal use only. Commercial resale, distribution, or unauthorized resale of SterlinGlams products is strictly prohibited.</p>
+                    <p>Once an order has been confirmed and processing has begun, requests for modification or cancellation may not be accommodated.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 5 -->
+            <div id="clause-5">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">5. Unavailability of Goods</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>If we are unable to supply the products ordered within seven (7) days after order confirmation due to unavailability or circumstances beyond our reasonable control, we reserve the right to cancel the order.</p>
+                    <p>In such cases, you will be notified promptly and any payments already received will be refunded through the original payment method where possible.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 6 -->
+            <div id="clause-6">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">6. Prices and Additional Charges</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>All prices displayed on the Website are stated in the applicable currency and include any charges specified at checkout.</p>
+                    <p>The total amount payable, including shipping and any applicable fees, will be displayed before you complete your purchase.</p>
+                    <p>Once an order has been successfully submitted and payment received, the agreed purchase price cannot be altered except where required by law.</p>
+                    <p>For international transactions, your bank or card issuer may impose foreign transaction fees, currency conversion charges, or other banking fees. Such charges are the sole responsibility of the customer.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 7 -->
+            <div id="clause-7">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">7. Payment Terms</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>Full payment is required at the time an order is placed. SterlinGlams currently accepts approved payment methods displayed during checkout, including debit cards, credit cards, bank transfers, and other available payment options.</p>
+                    <p>For orders paid by bank transfer:</p>
+                    <ul class="space-y-2 pl-4">
+                        @foreach (var item in new[] {
+                            "Payment must be received within five (5) banking days from the date of order confirmation.",
+                            "Orders for which payment is not received within this period may be cancelled without further notice."
+                        })
+                        {
+                            <li class="flex items-start gap-3"><span class="mt-1.5 w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0"></span>@item</li>
+                        }
+                    </ul>
+                    <p>SterlinGlams shall not be responsible for delays or failures in payment processing caused by banks, payment providers, or card issuers.</p>
+                    <p>A receipt or invoice will be provided electronically and/or included with your shipment where applicable.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 8 -->
+            <div id="clause-8">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">8. Delivery and Retention of Title</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p class="text-xs tracking-[0.15em] uppercase text-neutral-400">Estimated Delivery Times</p>
+                    <div class="bg-stone-50 p-5 space-y-2">
+                        @foreach (var (region, time) in new[] {
+                            ("Lagos", "4–5 business days"),
+                            ("Within Nigeria", "4–7 business days"),
+                            ("International Orders", "4–7 business days")
+                        })
+                        {
+                            <div class="flex justify-between text-sm">
+                                <span class="text-neutral-600">@region</span>
+                                <span class="text-neutral-400">@time</span>
+                            </div>
+                        }
+                    </div>
+                    <p>Delivery times are estimates only and are not guaranteed. Orders placed on business days before the applicable order processing cut-off time will typically be processed on the next business day. Orders placed on weekends or public holidays will be processed on the following business days.</p>
+                    <p>No deliveries are made on weekends or public holidays unless otherwise stated.</p>
+                    <p>Customers should inspect deliveries promptly upon receipt and notify SterlinGlams within a reasonable period of any discrepancies, missing items, or visible damage.</p>
+                    <p>Ownership of the products shall remain with SterlinGlams until full payment has been received and cleared.</p>
+                    <p>Products purchased through physical SterlinGlams stores may not be returned through the Website unless expressly permitted by our Returns Policy.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 9 -->
+            <div id="clause-9">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">9. Warranty and After-Sales Service</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>Customers requiring after-sales support or warranty assistance should contact SterlinGlams Customer Service using the contact details provided on the Website.</p>
+                    <p>Warranty coverage, where applicable, shall be subject to the specific warranty terms accompanying the product and any applicable consumer protection laws.</p>
+                    <p>Normal wear and tear, misuse, accidental damage, unauthorized alterations, and improper handling are not covered under warranty.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 10 -->
+            <div id="clause-10">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">10. Limitation of Liability</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>Nothing in these Terms excludes or limits liability that cannot be excluded or limited under applicable law.</p>
+                    <p>To the maximum extent permitted by law, SterlinGlams shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, revenue, data, goodwill, or business opportunities arising from or related to the use of the Website or the purchase of products.</p>
+                    <p>Where liability cannot be excluded, SterlinGlams' total liability shall be limited to the amount paid by the customer for the relevant product giving rise to the claim.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 11 -->
+            <div id="clause-11">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">11. Governing Law</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>These Terms shall be governed by and construed in accordance with the laws of the Federal Republic of Nigeria.</p>
+                    <p>Any disputes arising out of or relating to these Terms, the Website, or any purchase made through the Website shall be subject to the exclusive jurisdiction of the competent courts of Nigeria.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-neutral-100"></div>
+
+            <!-- 12 -->
+            <div id="clause-12">
+                <h2 class="font-cormorant text-2xl font-light text-neutral-900 mb-4">12. Changes to These Terms</h2>
+                <div class="text-sm text-neutral-500 font-light leading-relaxed space-y-4">
+                    <p>SterlinGlams reserves the right to amend or update these Terms at any time. Any changes will become effective upon publication on the Website.</p>
+                    <p>Customers are encouraged to review these Terms periodically before placing orders.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="bg-stone-50 p-8 mt-16">
+            <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-3">Questions?</p>
+            <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                For any queries regarding these Terms, please contact us at
+                <a href="mailto:info@SterlinGlams.com" class="text-neutral-900 hover:underline underline-offset-2">info@SterlinGlams.com</a>.
+            </p>
+        </div>
+
+    </div>
+</section>

@@ -58,6 +58,21 @@ public class HomeController : Controller
         return View();
     }
 
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    public IActionResult Terms()
+    {
+        return View();
+    }
+
+    public IActionResult PaymentReturns()
+    {
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

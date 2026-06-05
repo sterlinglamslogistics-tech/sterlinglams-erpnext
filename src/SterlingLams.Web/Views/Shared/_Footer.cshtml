@@ -71,9 +71,9 @@
                 &copy; @DateTime.UtcNow.Year Sterlin Glams. All rights reserved.
             </p>
             <div class="flex gap-6">
-                <a href="#" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Privacy Policy</a>
-                <a href="#" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Terms of Service</a>
-                <a href="#" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Returns</a>
+                <a asp-controller="Home" asp-action="Privacy" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Privacy Policy</a>
+                <a asp-controller="Home" asp-action="Terms" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Terms of Service</a>
+                <a asp-controller="Home" asp-action="PaymentReturns" class="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Payment &amp; Returns</a>
             </div>
         </div>
     </div>

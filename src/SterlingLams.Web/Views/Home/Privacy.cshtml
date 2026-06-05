@@ -1,0 +1,132 @@
+@{
+    ViewData["Title"] = "Privacy Policy";
+    ViewData["Description"] = "Sterlin Glams Privacy Policy — how we collect, use, and protect your personal information.";
+    Layout = "_Layout";
+}
+
+<!-- Hero -->
+<section class="relative h-56 flex items-center justify-center bg-stone-50">
+    <div class="text-center">
+        <p class="text-xs tracking-[0.4em] uppercase text-neutral-500 mb-4">Legal</p>
+        <h1 class="font-cormorant text-5xl font-light text-neutral-900">Privacy Policy</h1>
+    </div>
+</section>
+
+<section class="py-20 bg-white">
+    <div class="max-w-3xl mx-auto px-6">
+
+        <p class="text-sm text-neutral-500 font-light leading-relaxed mb-12">
+            At <strong class="font-normal text-neutral-800">Sterlin Glams</strong>, we believe that quality is found in the details. Whether it's impeccable craftsmanship, exceptional service, or creating memorable experiences for our customers, attention to detail is at the heart of everything we do.
+        </p>
+        <p class="text-sm text-neutral-500 font-light leading-relaxed mb-6">
+            The most important details, however, are yours. We are committed to protecting your personal information and ensuring that it is handled responsibly, securely, and transparently. This Privacy Policy explains how we collect, use, store, and protect your data in accordance with applicable data protection laws, including the General Data Protection Regulation (GDPR) where applicable.
+        </p>
+        <p class="text-sm text-neutral-500 font-light leading-relaxed mb-16">
+            The information you share with us helps us provide you with a better shopping experience and enables us to offer products, services, and communications tailored to your interests.
+        </p>
+
+        <!-- Section -->
+        <div class="mb-14">
+            <h2 class="font-cormorant text-3xl font-light text-neutral-900 mb-8">How We Use Your Information</h2>
+
+            <div class="space-y-10">
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Exclusive Offers and Rewards</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        We may use your information to keep you informed about special promotions, discounts, and exclusive offers, helping you get the best value from your shopping experience.
+                    </p>
+                </div>
+
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Personalized Recommendations</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        By understanding your preferences and interests, we can provide product recommendations, inspiration, and content that are most relevant to you.
+                    </p>
+                </div>
+
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Improving Your Shopping Experience</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        Information about how you interact with our website helps us enhance its functionality, improve navigation, and deliver a more personalized and user-friendly experience.
+                    </p>
+                </div>
+
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Reliable Service Delivery</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        To provide certain services, we may share relevant personal information with carefully selected third-party service providers. These partners are required to maintain strict confidentiality and uphold the same high standards of data protection and security that we do.
+                    </p>
+                </div>
+
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Customer Support</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        When you contact our customer service team, we may access your account information to assist you more efficiently, resolve issues, and provide a faster, more personalized service.
+                    </p>
+                </div>
+
+                <div class="border-l-2 border-neutral-200 pl-6">
+                    <h3 class="text-xs tracking-[0.2em] uppercase text-neutral-700 mb-3">Security and Fraud Prevention</h3>
+                    <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                        We use your information to verify identities, detect suspicious activities, prevent fraud, and help ensure that our platform remains secure for all customers.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commitment -->
+        <div class="mb-14">
+            <h2 class="font-cormorant text-3xl font-light text-neutral-900 mb-6">Our Commitment to Your Privacy</h2>
+            <p class="text-sm text-neutral-500 font-light leading-relaxed mb-6">We are committed to:</p>
+            <ul class="space-y-3">
+                @foreach (var item in new[] {
+                    "Collecting only the information necessary to provide and improve our services.",
+                    "Keeping your personal information secure through appropriate technical and organizational measures.",
+                    "Being transparent about how your information is used.",
+                    "Respecting your privacy rights and choices regarding your personal data.",
+                    "Never selling your personal information to third parties."
+                })
+                {
+                    <li class="flex items-start gap-3 text-sm text-neutral-500 font-light">
+                        <span class="mt-1.5 w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                        @item
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Rights -->
+        <div class="mb-14">
+            <h2 class="font-cormorant text-3xl font-light text-neutral-900 mb-6">Your Rights</h2>
+            <p class="text-sm text-neutral-500 font-light leading-relaxed mb-6">
+                Depending on your location and applicable data protection laws, you may have the right to:
+            </p>
+            <ul class="space-y-3">
+                @foreach (var right in new[] {
+                    "Access the personal information we hold about you.",
+                    "Request correction of inaccurate or incomplete information.",
+                    "Request deletion of your personal data.",
+                    "Restrict or object to certain processing activities.",
+                    "Withdraw consent where processing is based on consent.",
+                    "Request a copy of your personal data in a portable format."
+                })
+                {
+                    <li class="flex items-start gap-3 text-sm text-neutral-500 font-light">
+                        <span class="mt-1.5 w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                        @right
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Contact -->
+        <div class="bg-stone-50 p-8 mt-12">
+            <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-3">Contact Us</p>
+            <p class="text-sm text-neutral-500 font-light leading-relaxed">
+                To exercise any of these rights or if you have questions about how your information is handled, please contact us at
+                <a href="mailto:info@SterlinGlams.com" class="text-neutral-900 hover:underline underline-offset-2">info@SterlinGlams.com</a>.
+            </p>
+        </div>
+
+    </div>
+</section>
