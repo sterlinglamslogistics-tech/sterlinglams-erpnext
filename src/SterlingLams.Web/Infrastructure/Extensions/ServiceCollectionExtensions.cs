@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
 
         // ─── Product Import ───────────────────────────────────────────────────
         services.AddScoped<IProductImportService, ProductImportService>();
+        services.AddScoped<IWooCommerceImportService, WooCommerceImportService>();
 
         // ─── Payment ─────────────────────────────────────────────────────────
         var paymentProvider = configuration["Payment:Provider"] ?? "Paystack";

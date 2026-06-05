@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SterlingLams.Web.Areas.Admin.ViewModels;
@@ -17,16 +18,19 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IInventoryService _inventory;
         private readonly IProductImportService _importer;
+        private readonly IWooCommerceImportService _wooImporter;
         private const int PageSize = 30;
 
         public ProductsController(
             ApplicationDbContext db,
             IInventoryService inventory,
-            IProductImportService importer)
+            IProductImportService importer,
+            IWooCommerceImportService wooImporter)
         {
             _db = db;
             _inventory = inventory;
             _importer = importer;
+            _wooImporter = wooImporter;
         }
 
         public async Task<IActionResult> Index(string q = "", int page = 1)
@@ -156,6 +160,38 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
 
             TempData["Success"] = $"'{product.Name}' is now {(product.IsActive ? "active" : "inactive")}.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportFromWooCommerce(Microsoft.AspNetCore.Http.IFormFile csvFile)
+        {
+            if (csvFile == null || csvFile.Length == 0)
+            {
+                TempData["Error"] = "Please select a CSV file to upload.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!csvFile.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "Only .csv files are supported.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                using var stream = csvFile.OpenReadStream();
+                var result = await _wooImporter.ImportFromCsvAsync(stream);
+                TempData[result.Errors.Any() ? "Warning" : "Success"] =
+                    $"WooCommerce import complete: {result.Summary}" +
+                    (result.Errors.Any() ? $" — First error: {result.Errors[0]}" : "");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Import failed: {ex.Message}";
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

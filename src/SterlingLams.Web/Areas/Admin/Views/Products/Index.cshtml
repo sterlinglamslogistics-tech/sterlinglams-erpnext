@@ -15,7 +15,19 @@
         </button>
     </form>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
+        <!-- Import from WooCommerce CSV -->
+        <form asp-area="Admin" asp-controller="Products" asp-action="ImportFromWooCommerce"
+              method="post" enctype="multipart/form-data"
+              onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').textContent='Importing…';">
+            @Html.AntiForgeryToken()
+            <label class="flex items-center gap-2 px-4 py-2 border border-emerald-400 text-emerald-700 text-xs rounded-sm hover:bg-emerald-50 transition-colors cursor-pointer">
+                <span>↑ Import WooCommerce CSV</span>
+                <input type="file" name="csvFile" accept=".csv" class="hidden"
+                       onchange="this.closest('form').querySelector('button[type=submit]').click()" />
+            </label>
+            <button type="submit" class="hidden"></button>
+        </form>
         <!-- Import from ERPNext (full product catalog upsert) -->
         <form asp-area="Admin" asp-controller="Products" asp-action="ImportFromERPNext" method="post"
               onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Importing…';">
