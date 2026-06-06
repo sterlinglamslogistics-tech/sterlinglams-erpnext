@@ -202,20 +202,36 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveVariant(int productId, int variantId,
-            string? sku, decimal? priceAdjustment, int stockQuantity, bool isActive)
+        public async Task<IActionResult> SaveAllVariants(int productId,
+            Microsoft.AspNetCore.Http.IFormCollection form)
         {
-            var variant = await _db.ProductVariants
-                .FirstOrDefaultAsync(v => v.Id == variantId && v.ProductId == productId);
-            if (variant == null) return NotFound();
+            var variants = await _db.ProductVariants
+                .Where(v => v.ProductId == productId)
+                .ToListAsync();
 
-            variant.Sku             = sku?.Trim();
-            variant.PriceAdjustment = priceAdjustment;
-            variant.StockQuantity   = stockQuantity;
-            variant.IsActive        = isActive;
-            await _db.SaveChangesAsync();
+            int saved = 0;
+            foreach (var variant in variants)
+            {
+                var sku  = form[$"sku_{variant.Id}"].FirstOrDefault()?.Trim();
+                var adj  = form[$"adj_{variant.Id}"].FirstOrDefault();
+                // The form sends hidden=false + optional checkbox=true; last value wins
+                var activeVals = form[$"active_{variant.Id}"];
+                var active = activeVals.Contains("true");
 
-            TempData["Success"] = $"Variant '{variant.Name}' updated.";
+                variant.Sku             = sku;
+                variant.PriceAdjustment = decimal.TryParse(adj,
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : null;
+                variant.IsActive        = active;
+                saved++;
+            }
+
+            if (saved > 0)
+            {
+                await _db.SaveChangesAsync();
+                TempData["Success"] = $"All {saved} variant(s) saved.";
+            }
+
             return RedirectToAction(nameof(Edit), new { id = productId });
         }
 
