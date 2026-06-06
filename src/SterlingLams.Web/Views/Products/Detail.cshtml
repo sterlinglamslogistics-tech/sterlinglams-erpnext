@@ -74,14 +74,14 @@
                 </div>
             }
 
-            <!-- ─── Variants ──────────────────────────────────────────── -->
+            <!-- ─── Variants / Colour Selector ───────────────────────── -->
             @if (Model.Variants.Any())
             {
                 var attributeNames = Model.Variants
                     .SelectMany(v => v.AttributeLabels.Select(a => a.AttributeName))
                     .Distinct().ToList();
 
-                <div class="mb-8 space-y-4">
+                <div class="mb-8 space-y-5" id="variant-selectors">
                     @foreach (var attrName in attributeNames)
                     {
                         var distinctValues = Model.Variants
@@ -91,14 +91,18 @@
                             .ToList();
 
                         <div>
-                            <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-2">@attrName</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <p class="text-xs tracking-[0.2em] uppercase text-neutral-500">@attrName</p>
+                                <span id="selected-label-@attrName.ToLower().Replace(" ","-")"
+                                      class="text-xs text-neutral-700 font-medium hidden"></span>
+                            </div>
                             <div class="flex flex-wrap gap-2">
                                 @foreach (var val in distinctValues)
                                 {
                                     if (!string.IsNullOrEmpty(val.ColorHex))
                                     {
                                         <button type="button"
-                                                class="attr-btn w-8 h-8 rounded-full border-2 border-transparent hover:border-neutral-900 transition-colors"
+                                                class="attr-btn w-9 h-9 rounded-full border-2 border-neutral-200 hover:border-neutral-900 transition-all relative"
                                                 style="background-color: @val.ColorHex"
                                                 data-attr="@attrName" data-value="@val.Value"
                                                 title="@val.Value">
@@ -107,7 +111,7 @@
                                     else
                                     {
                                         <button type="button"
-                                                class="attr-btn border border-neutral-300 text-xs px-4 py-2 hover:border-neutral-900 hover:text-neutral-900 transition-colors"
+                                                class="attr-btn border border-neutral-200 text-xs px-4 py-2 text-neutral-600 hover:border-neutral-900 hover:text-neutral-900 transition-colors"
                                                 data-attr="@attrName" data-value="@val.Value">
                                             @val.Value
                                         </button>
@@ -119,6 +123,11 @@
 
                     <input type="hidden" id="selected-variant-id" value="" />
                     <p id="variant-price-adj" class="text-xs text-neutral-400 hidden"></p>
+
+                    <!-- Prompt shown before colour is selected -->
+                    <p id="select-colour-prompt" class="text-xs text-amber-600 hidden">
+                        Please select a colour before adding to bag.
+                    </p>
                 </div>
 
                 <script id="variants-data" type="application/json">
@@ -147,6 +156,7 @@
                 <div class="flex gap-3">
                     <button id="add-to-cart"
                             data-product-id="@Model.Id"
+                            data-has-variants="@(Model.Variants.Any() ? "true" : "false")"
                             @(!Model.IsAvailableAnywhere ? "disabled" : "")
                             class="flex-1 bg-neutral-900 text-white text-xs tracking-[0.2em] uppercase py-4 px-8 hover:bg-neutral-700 transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed">
                         @(Model.IsAvailableAnywhere ? "Add to Bag" : "Out of Stock")
@@ -172,12 +182,17 @@
             </a>
 
             <!-- ─── Specifications ─────────────────────────────────────── -->
-            @if (!string.IsNullOrEmpty(Model.Metal) || !string.IsNullOrEmpty(Model.Weight))
+            @{
+                // Only show static colour detail if there are NO variants (variants show it interactively above)
+                var showColourDetail = !Model.Variants.Any() && !string.IsNullOrEmpty(Model.Metal);
+                var showDetails = showColourDetail || !string.IsNullOrEmpty(Model.Weight);
+            }
+            @if (showDetails)
             {
                 <div class="border-t border-neutral-100 pt-8">
                     <p class="text-xs tracking-[0.2em] uppercase text-neutral-500 mb-4">Details</p>
                     <dl class="space-y-2">
-                        @if (!string.IsNullOrEmpty(Model.Metal))
+                        @if (showColourDetail)
                         {
                             <div class="flex justify-between text-sm">
                                 <dt class="text-neutral-500 font-light">Colour</dt>
@@ -242,6 +257,7 @@
     const variantsDataEl = document.getElementById('variants-data');
     const variants = variantsDataEl ? JSON.parse(variantsDataEl.textContent) : [];
     const selectedAttrs = {};
+    const hasVariants = document.getElementById('add-to-cart')?.dataset.hasVariants === 'true';
 
     document.querySelectorAll('.attr-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -251,13 +267,31 @@
 
             // Highlight selected button per attribute group
             document.querySelectorAll(`.attr-btn[data-attr="${attr}"]`).forEach(b => {
-                b.classList.remove('border-neutral-900', 'bg-neutral-900', 'text-white', '!border-neutral-900');
+                b.classList.remove('border-neutral-900', 'bg-neutral-900', 'text-white');
+                b.style.outline = '';
             });
-            btn.classList.add('border-neutral-900', 'bg-neutral-900', 'text-white');
+
+            // Visual feedback: outline for colour swatches, filled style for text buttons
+            if (btn.style.backgroundColor) {
+                btn.style.outline = '2px solid #171717';
+                btn.style.outlineOffset = '2px';
+            } else {
+                btn.classList.add('border-neutral-900', 'bg-neutral-900', 'text-white');
+            }
+
+            // Show selected label next to attribute name
+            const labelEl = document.getElementById(`selected-label-${attr.toLowerCase().replace(/ /g,'-')}`);
+            if (labelEl) {
+                labelEl.textContent = `— ${val}`;
+                labelEl.classList.remove('hidden');
+            }
+
+            // Hide the "select colour" prompt
+            document.getElementById('select-colour-prompt')?.classList.add('hidden');
 
             // Find matching variant
             const match = variants.find(v =>
-                Object.entries(selectedAttrs).every(([k, val]) => v.attributes[k] === val)
+                Object.entries(selectedAttrs).every(([k, v2]) => v.attributes[k] === v2)
             );
             if (match) {
                 selectedVariantId = match.id;
@@ -272,6 +306,16 @@
             }
         });
     });
+
+    // Validate colour selection before add-to-cart
+    document.getElementById('add-to-cart')?.addEventListener('click', function(e) {
+        if (hasVariants && !selectedVariantId) {
+            e.stopImmediatePropagation();
+            document.getElementById('select-colour-prompt')?.classList.remove('hidden');
+            document.getElementById('variant-selectors')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return false;
+        }
+    }, true); // capture phase so it runs before the cart handler
 
     // ── Add to cart ───────────────────────────────────────────────────────
     document.getElementById('add-to-cart')?.addEventListener('click', async (e) => {

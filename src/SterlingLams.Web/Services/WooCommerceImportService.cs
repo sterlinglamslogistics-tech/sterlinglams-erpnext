@@ -60,14 +60,25 @@ public class WooCommerceImportService : IWooCommerceImportService
     {
         var result = new WooImportResult();
 
-        // Clear all existing products before importing
-        var toDelete = await _db.Products.Include(p => p.Images).ToListAsync();
+        // Clear all existing products (and their variants/images) before importing
+        var toDelete = await _db.Products
+            .Include(p => p.Images)
+            .Include(p => p.Variants)
+            .ToListAsync();
         _db.Products.RemoveRange(toDelete);
         await _db.SaveChangesAsync();
         _logger.LogInformation("Cleared {Count} existing products before WooCommerce import.", toDelete.Count);
 
         var categories = await _db.Categories.ToListAsync();
         var existingByCode = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+
+        // Load the Colour attribute and all its values for variant creation
+        var colourAttr = await _db.ProductAttributes
+            .Include(a => a.Values)
+            .FirstOrDefaultAsync(a => a.Slug == "colour");
+
+        var colourValues = colourAttr?.Values.ToList()
+                        ?? new List<ProductAttributeValue>();
 
         var rows = ParseCsv(csvStream);
         var published = rows.Where(r => Get(r, "post_status") == "Published").ToList();
@@ -98,62 +109,83 @@ public class WooCommerceImportService : IWooCommerceImportService
 
                 var description = StripHtml(Get(row, "post_content"));
                 var shortDesc   = StripHtml(Get(row, "post_excerpt"));
-                var colour      = Get(row, "attribute:Colour");
                 var imageUrls   = ParseImageUrls(Get(row, "images"));
 
-                if (existingByCode.TryGetValue(code, out var existing))
+                // pa_color is the main colour field — pipe-separated for multi-colour products
+                // e.g. "Gold|Silver" means two variants; "Gold/Silver" is a single two-tone option
+                var paColor  = Get(row, "attribute:pa_color");
+                var colNames = string.IsNullOrWhiteSpace(paColor)
+                    ? Array.Empty<string>()
+                    : paColor.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                // Use first colour as the product's Metal field (for display in Details)
+                var firstColour = colNames.FirstOrDefault() ?? Get(row, "attribute:Colour");
+
+                var slug    = await UniqueSlugAsync(Slugify(name));
+                var product = new Product
                 {
-                    existing.Name             = name;
-                    existing.Price            = price;
-                    existing.CategoryId       = category.Id;
-                    existing.UpdatedAt        = DateTime.UtcNow;
-                    if (!string.IsNullOrWhiteSpace(description))   existing.Description      = description;
-                    if (!string.IsNullOrWhiteSpace(shortDesc))     existing.ShortDescription = shortDesc;
-                    if (!string.IsNullOrWhiteSpace(colour))        existing.Metal            = colour;
+                    ErpNextItemCode  = code,
+                    Sku              = sku,
+                    Name             = name,
+                    Slug             = slug,
+                    Price            = price,
+                    Description      = description,
+                    ShortDescription = shortDesc,
+                    Metal            = firstColour,
+                    IsActive         = true,
+                    CategoryId       = category.Id,
+                    CreatedAt        = DateTime.UtcNow,
+                    UpdatedAt        = DateTime.UtcNow,
+                };
 
-                    var existingUrls = existing.Images.Select(i => i.Url).ToHashSet();
-                    var nextSort     = existing.Images.Any() ? existing.Images.Max(i => i.SortOrder) : 0;
-                    foreach (var url in imageUrls.Where(u => !existingUrls.Contains(u)))
-                    {
-                        nextSort++;
-                        existing.Images.Add(new ProductImage { Url = url, IsPrimary = nextSort == 1 && !existingUrls.Any(), SortOrder = nextSort });
-                    }
-
-                    result.Updated++;
-                }
-                else
+                var sort = 0;
+                foreach (var url in imageUrls)
                 {
-                    var slug    = await UniqueSlugAsync(Slugify(name));
-                    var product = new Product
-                    {
-                        ErpNextItemCode  = code,
-                        Sku              = sku,
-                        Name             = name,
-                        Slug             = slug,
-                        Price            = price,
-                        Description      = description,
-                        ShortDescription = shortDesc,
-                        Metal            = colour,
-                        IsActive         = true,
-                        CategoryId       = category.Id,
-                        CreatedAt        = DateTime.UtcNow,
-                        UpdatedAt        = DateTime.UtcNow,
-                    };
-
-                    var sort = 0;
-                    foreach (var url in imageUrls)
-                    {
-                        sort++;
-                        product.Images.Add(new ProductImage { Url = url, IsPrimary = sort == 1, SortOrder = sort });
-                    }
-
-                    _db.Products.Add(product);
-                    existingByCode[code] = product;
-                    result.Created++;
+                    sort++;
+                    product.Images.Add(new ProductImage { Url = url, IsPrimary = sort == 1, SortOrder = sort });
                 }
+
+                // Create a variant per colour option
+                if (colNames.Length > 0 && colourAttr != null)
+                {
+                    foreach (var colName in colNames)
+                    {
+                        // Find exact match first, then case-insensitive, then create new value
+                        var attrVal = colourValues.FirstOrDefault(v =>
+                                          v.Value.Equals(colName, StringComparison.Ordinal))
+                                   ?? colourValues.FirstOrDefault(v =>
+                                          v.Value.Equals(colName, StringComparison.OrdinalIgnoreCase));
+
+                        if (attrVal == null)
+                        {
+                            // Create new colour value on the fly
+                            attrVal = new ProductAttributeValue
+                            {
+                                AttributeId = colourAttr.Id,
+                                Value       = colName,
+                                SortOrder   = colourValues.Count + 1
+                            };
+                            _db.ProductAttributeValues.Add(attrVal);
+                            colourValues.Add(attrVal);
+                            await _db.SaveChangesAsync(); // need the ID before linking
+                        }
+
+                        product.Variants.Add(new ProductVariant
+                        {
+                            Name            = colName,
+                            IsActive        = true,
+                            StockQuantity   = 0,
+                            AttributeValues = new List<ProductAttributeValue> { attrVal }
+                        });
+                    }
+                }
+
+                _db.Products.Add(product);
+                existingByCode[code] = product;
+                result.Created++;
 
                 batchCount++;
-                if (batchCount % 50 == 0)
+                if (batchCount % 30 == 0)
                     await _db.SaveChangesAsync();
             }
             catch (Exception ex)
