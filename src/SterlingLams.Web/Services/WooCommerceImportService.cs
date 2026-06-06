@@ -217,8 +217,36 @@ public class WooCommerceImportService : IWooCommerceImportService
             result.Errors.Add($"Final save error: {inner.Message}");
         }
 
+        // Ensure every product has a StoreInventory record for every active store (qty = 0)
+        await EnsureStoreInventoryRecordsAsync();
+
         _logger.LogInformation("WooCommerce CSV import complete: {Summary}", result.Summary);
         return result;
+    }
+
+    private async Task EnsureStoreInventoryRecordsAsync()
+    {
+        var productIds = await _db.Products.Select(p => p.Id).ToListAsync();
+        var storeIds   = await _db.Stores.Where(s => s.IsActive).Select(s => s.Id).ToListAsync();
+
+        var existing = await _db.StoreInventories
+            .Select(si => new { si.ProductId, si.StoreId })
+            .ToListAsync();
+
+        var existingSet = existing.Select(e => (e.ProductId, e.StoreId)).ToHashSet();
+
+        var toCreate = new List<StoreInventory>();
+        foreach (var pid in productIds)
+            foreach (var sid in storeIds)
+                if (!existingSet.Contains((pid, sid)))
+                    toCreate.Add(new StoreInventory { ProductId = pid, StoreId = sid, QuantityOnHand = 0, LastSyncedAt = DateTime.UtcNow });
+
+        if (toCreate.Any())
+        {
+            _db.StoreInventories.AddRange(toCreate);
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("Created {Count} StoreInventory records (stock = 0).", toCreate.Count);
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
