@@ -178,7 +178,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                     Fulfillment = o.FulfillmentType.ToString(),
                     o.IsPaid,
                     PaymentRef = o.PaymentReference ?? "",
-                    o.ErpNextSalesOrderName,
+                    o.ErpNextInvoiceName,
                     CreatedAt = o.CreatedAt.ToString("yyyy-MM-dd HH:mm")
                 })
                 .ToListAsync();
@@ -188,7 +188,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
 
             foreach (var o in orders)
             {
-                sb.AppendLine($"\"{o.OrderNumber}\",\"{o.CustomerName}\",\"{o.CustomerEmail}\",{o.Total},{o.Subtotal},{o.DeliveryFee},{o.Status},{o.Fulfillment},{o.IsPaid},\"{o.PaymentRef}\",\"{o.ErpNextSalesOrderName ?? ""}\",\"{o.CreatedAt}\"");
+                sb.AppendLine($"\"{o.OrderNumber}\",\"{o.CustomerName}\",\"{o.CustomerEmail}\",{o.Total},{o.Subtotal},{o.DeliveryFee},{o.Status},{o.Fulfillment},{o.IsPaid},\"{o.PaymentRef}\",\"{o.ErpNextInvoiceName ?? ""}\",\"{o.CreatedAt}\"");
             }
 
             var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();

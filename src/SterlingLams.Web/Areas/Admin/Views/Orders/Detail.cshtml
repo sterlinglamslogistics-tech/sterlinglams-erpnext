@@ -121,10 +121,10 @@
         <!-- ERPNext Info -->
         <div class="bg-white rounded-sm border border-neutral-100 px-6 py-4">
             <h2 class="text-sm font-medium mb-3">ERPNext</h2>
-            @if (!string.IsNullOrEmpty(Model.Order.ErpNextSalesOrderName))
+            @if (!string.IsNullOrEmpty(Model.Order.ErpNextInvoiceName))
             {
                 <p class="text-xs text-emerald-700 font-medium">✓ Synced</p>
-                <p class="text-xs text-neutral-500 font-mono mt-1">@Model.Order.ErpNextSalesOrderName</p>
+                <p class="text-xs text-neutral-500 font-mono mt-1">@Model.Order.ErpNextInvoiceName</p>
             }
             else
             {

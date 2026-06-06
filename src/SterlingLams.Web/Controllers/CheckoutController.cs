@@ -261,25 +261,25 @@ public class CheckoutController : Controller
     }
 
     /// <summary>
-    /// Pushes a confirmed order to ERPNext: creates a Sales Order and immediately
-    /// issues a Material Issue Stock Entry to deduct the sold quantities from the
-    /// pickup store's warehouse (or the first active store for delivery orders).
-    /// Failures are logged but never throw — order confirmation must not be blocked.
+    /// Pushes a confirmed website order to ERPNext as a Sales Invoice with update_stock=1.
+    /// This is the same document type ERPNext POS creates, so stock levels stay perfectly
+    /// in sync between the website and the POS terminal.
+    /// Failures are logged but never thrown — order confirmation must not be blocked.
     /// </summary>
     private async Task PushOrderToERPNextAsync(Order order)
     {
         try
         {
-            // Reload with items + store if not already included
-            if (!order.Items.Any())
-            {
-                order = await _db.Orders
-                    .Include(o => o.Items)
-                    .Include(o => o.PickupStore)
-                    .FirstAsync(o => o.Id == order.Id);
-            }
+            // Reload with items, store, user, and address if not already included
+            order = await _db.Orders
+                .Include(o => o.Items)
+                .Include(o => o.PickupStore)
+                .Include(o => o.User)
+                .FirstAsync(o => o.Id == order.Id);
 
-            // Determine warehouse — pickup store takes priority, else first active store
+            // Determine which warehouse to deduct from:
+            //   • Pickup orders  → the chosen store's warehouse
+            //   • Delivery orders → the first active store (acts as fulfilment hub)
             string warehouse;
             if (order.PickupStore?.ErpNextWarehouse is { Length: > 0 } pw)
             {
@@ -287,73 +287,62 @@ public class CheckoutController : Controller
             }
             else
             {
-                var firstStore = await _db.Stores.Where(s => s.IsActive).FirstOrDefaultAsync();
-                warehouse = firstStore?.ErpNextWarehouse ?? "Sterlin Glams Abuja - SG";
+                var hub = await _db.Stores.Where(s => s.IsActive).FirstOrDefaultAsync();
+                warehouse = hub?.ErpNextWarehouse ?? "Sterlin Glams Abuja - SG";
             }
 
-            // Resolve product → ERPNext item code
+            // Map product IDs → ERPNext item codes (skip products with no code)
             var productIds = order.Items.Select(i => i.ProductId).Distinct().ToList();
-            var itemCodes = await _db.Products
+            var itemCodes  = await _db.Products
                 .Where(p => productIds.Contains(p.Id) && !string.IsNullOrEmpty(p.ErpNextItemCode))
                 .ToDictionaryAsync(p => p.Id, p => p.ErpNextItemCode);
 
-            var eligibleItems = order.Items
+            var invoiceItems = order.Items
                 .Where(i => itemCodes.ContainsKey(i.ProductId))
+                .Select(i => new ERPNextInvoiceItem
+                {
+                    ItemCode  = itemCodes[i.ProductId],
+                    Warehouse = warehouse,
+                    Qty       = i.Quantity,
+                    Rate      = i.UnitPrice,
+                })
                 .ToList();
 
-            if (eligibleItems.Count == 0)
+            if (invoiceItems.Count == 0)
             {
-                _logger.LogWarning("No ERPNext item codes found for order {OrderNumber}. Skipping ERPNext push.", order.OrderNumber);
+                _logger.LogWarning("No ERPNext item codes found for order {OrderNumber} — skipping ERPNext push.",
+                    order.OrderNumber);
                 return;
             }
 
-            // 1. Create + submit Sales Order (creates reservation in ERPNext)
-            var customer = _config["ERPNext:DefaultCustomer"] ?? "Walk-In Customer";
+            // Build a rich remarks string so the invoice is identifiable in ERPNext
+            var customerName  = order.User?.FullName ?? "Website Customer";
+            var customerEmail = order.User?.Email ?? "";
+            var fulfillment   = order.FulfillmentType == FulfillmentType.StorePickup
+                ? $"Pickup: {order.PickupStore?.Name ?? "Store"}"
+                : "Delivery";
 
-            var soItems = eligibleItems.Select(i => new ERPNextSalesOrderItem
-            {
-                ItemCode  = itemCodes[i.ProductId],
-                Warehouse = warehouse,
-                Qty       = i.Quantity,
-                Rate      = i.UnitPrice
-            }).ToList();
+            var remarks = $"Website order {order.OrderNumber} | {fulfillment} | {customerName} <{customerEmail}>";
 
-            string soName;
-            try
+            var invoiceName = await _erpNext.CreateSalesInvoiceAsync(new ERPNextSalesInvoiceRequest
             {
-                soName = await _erpNext.CreateSalesOrderAsync(new ERPNextCreateSalesOrderRequest
-                {
-                    Customer     = customer,
-                    DeliveryDate = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"),
-                    Items        = soItems
-                });
-                await _erpNext.SubmitSalesOrderAsync(soName);
-                order.ErpNextSalesOrderName = soName;
-                await _db.SaveChangesAsync();
-                _logger.LogInformation("ERPNext Sales Order {SoName} created for order {OrderNumber}", soName, order.OrderNumber);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("ERPNext Sales Order failed for order {OrderNumber}: {Message}", order.OrderNumber, ex.Message);
-                soName = string.Empty;
-            }
+                Customer = _config["ERPNext:DefaultCustomer"] ?? "Walk-In Customer",
+                PoNo     = order.OrderNumber,   // visible in ERPNext PO No column for easy search
+                Remarks  = remarks,
+                Items    = invoiceItems,
+            });
 
-            // 2. Create + submit Material Issue to deduct actual stock
-            var miItems = eligibleItems.Select(i => new ERPNextMaterialIssueItem
-            {
-                ItemCode       = itemCodes[i.ProductId],
-                SourceWarehouse = warehouse,
-                Qty            = i.Quantity,
-                BasicRate      = i.UnitPrice
-            }).ToList();
+            order.ErpNextInvoiceName = invoiceName;
+            await _db.SaveChangesAsync();
 
-            var miName = await _erpNext.CreateMaterialIssueAsync(miItems, $"Web order {order.OrderNumber}");
-            _logger.LogInformation("ERPNext Material Issue {MiName} created for order {OrderNumber} (warehouse: {Warehouse})",
-                miName, order.OrderNumber, warehouse);
+            _logger.LogInformation(
+                "ERPNext Sales Invoice {Invoice} created for order {OrderNumber} (warehouse: {Warehouse})",
+                invoiceName, order.OrderNumber, warehouse);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("ERPNext push failed for order {OrderNumber}: {Message}", order.OrderNumber, ex.Message);
+            _logger.LogWarning("ERPNext push failed for order {OrderNumber}: {Message}",
+                order.OrderNumber, ex.Message);
         }
     }
 
