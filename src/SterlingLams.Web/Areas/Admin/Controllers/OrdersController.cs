@@ -57,13 +57,23 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                 })
                 .ToListAsync();
 
+            // Count per status for tab badges
+            var allStatuses = new[] { "Pending","Confirmed","Processing","ReadyForPickup","Shipped","Delivered","Cancelled" };
+            var counts = await _db.Orders
+                .GroupBy(o => o.Status)
+                .Select(g => new { Status = g.Key.ToString(), Count = g.Count() })
+                .ToListAsync();
+            var statusCounts = allStatuses.ToDictionary(s => s, s => counts.FirstOrDefault(c => c.Status == s)?.Count ?? 0);
+            statusCounts[""] = await _db.Orders.CountAsync(); // "All" tab
+
             var vm = new AdminOrderListViewModel
             {
                 Orders = orders,
                 StatusFilter = status,
                 SearchQuery = q,
                 CurrentPage = page,
-                TotalPages = (int)Math.Ceiling(total / (double)PageSize)
+                TotalPages = (int)Math.Ceiling(total / (double)PageSize),
+                StatusCounts = statusCounts
             };
 
             return View(vm);
@@ -122,6 +132,21 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             await _db.SaveChangesAsync();
 
             TempData["Success"] = "Note saved.";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveTracking(int id, string trackingNumber)
+        {
+            var order = await _db.Orders.FindAsync(id);
+            if (order == null) return NotFound();
+
+            order.TrackingNumber = trackingNumber?.Trim();
+            order.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Tracking number saved.";
             return RedirectToAction(nameof(Detail), new { id });
         }
 

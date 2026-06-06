@@ -106,5 +106,19 @@
 
 <script src="~/js/app.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
+<script>
+// Global: disable submit buttons on form submit to prevent double-submissions
+document.addEventListener('submit', function (e) {
+    const form = e.target;
+    form.querySelectorAll('button[type="submit"]').forEach(btn => {
+        if (btn.dataset.noLoading) return;
+        const original = btn.textContent.trim();
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        // Re-enable after 8s as safety net
+        setTimeout(() => { btn.disabled = false; btn.textContent = original; }, 8000);
+    });
+});
+</script>
 </body>
 </html>

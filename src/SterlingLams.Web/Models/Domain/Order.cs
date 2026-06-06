@@ -47,6 +47,7 @@ public class Order
     public bool IsPaid { get; set; }
     public DateTime? PaidAt { get; set; }
 
+    public string? TrackingNumber { get; set; }
     public string? Notes { get; set; }
     public string? AdminNotes { get; set; }
 

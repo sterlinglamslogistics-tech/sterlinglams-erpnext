@@ -3,6 +3,41 @@
     ViewData["Title"] = "Audit Log";
 }
 
+<!-- Filters -->
+<form method="get" class="flex flex-wrap gap-2 mb-4">
+    <select name="action"
+            class="border border-neutral-200 rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-neutral-400 bg-white">
+        <option value="">All Actions</option>
+        @foreach (var a in Model.AvailableActions)
+        {
+            <option value="@a" selected="@(Model.ActionFilter == a)">@a</option>
+        }
+    </select>
+    <select name="entity"
+            class="border border-neutral-200 rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-neutral-400 bg-white">
+        <option value="">All Entities</option>
+        @foreach (var e in Model.AvailableEntities)
+        {
+            <option value="@e" selected="@(Model.EntityFilter == e)">@e</option>
+        }
+    </select>
+    <input type="date" name="dateFrom" value="@Model.DateFrom"
+           class="border border-neutral-200 rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-neutral-400" />
+    <input type="date" name="dateTo" value="@Model.DateTo"
+           class="border border-neutral-200 rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-neutral-400" />
+    <button type="submit"
+            class="px-4 py-1.5 bg-neutral-900 text-white text-xs rounded-sm hover:bg-neutral-700 transition-colors">
+        Filter
+    </button>
+    @if (!string.IsNullOrEmpty(Model.ActionFilter) || !string.IsNullOrEmpty(Model.EntityFilter) || !string.IsNullOrEmpty(Model.DateFrom))
+    {
+        <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index"
+           class="px-4 py-1.5 border border-neutral-200 text-neutral-500 text-xs rounded-sm hover:border-neutral-400 transition-colors">
+            Clear
+        </a>
+    }
+</form>
+
 <div class="bg-white rounded-sm border border-neutral-100 overflow-hidden">
     <table class="w-full text-sm">
         <thead>
@@ -17,7 +52,7 @@
         <tbody class="divide-y divide-neutral-50">
             @if (!Model.Logs.Any())
             {
-                <tr><td colspan="5" class="px-6 py-12 text-center text-xs text-neutral-400">No audit events recorded yet.</td></tr>
+                <tr><td colspan="5" class="px-6 py-12 text-center text-xs text-neutral-400">No audit events match your filters.</td></tr>
             }
             @foreach (var log in Model.Logs)
             {
@@ -48,6 +83,10 @@
         {
             <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index"
                asp-route-page="@p"
+               asp-route-action="@Model.ActionFilter"
+               asp-route-entity="@Model.EntityFilter"
+               asp-route-dateFrom="@Model.DateFrom"
+               asp-route-dateTo="@Model.DateTo"
                class="px-3 py-1.5 text-xs rounded-sm border transition-colors @(p == Model.CurrentPage ? "bg-neutral-900 text-white border-neutral-900" : "border-neutral-200 text-neutral-600 hover:border-neutral-400")">
                 @p
             </a>

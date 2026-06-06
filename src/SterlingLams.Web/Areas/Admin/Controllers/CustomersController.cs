@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -95,6 +96,36 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             };
 
             return View(vm);
+        }
+
+        public async Task<IActionResult> ExportCsv(string q = "")
+        {
+            var query = _db.Users.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(q))
+                query = query.Where(u =>
+                    EF.Functions.ILike(u.FirstName + " " + u.LastName, $"%{q}%") ||
+                    EF.Functions.ILike(u.Email!, $"%{q}%"));
+
+            var customers = await query
+                .OrderByDescending(u => u.CreatedAt)
+                .Select(u => new
+                {
+                    FullName  = u.FirstName + " " + u.LastName,
+                    u.Email,
+                    Phone     = u.PhoneNumber ?? "",
+                    Orders    = u.Orders.Count,
+                    TotalSpend = u.Orders.Where(o => o.IsPaid).Sum(o => (decimal?)o.Total) ?? 0,
+                    Joined    = u.CreatedAt.ToString("yyyy-MM-dd")
+                })
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Full Name,Email,Phone,Orders,Total Spend,Joined");
+            foreach (var c in customers)
+                sb.AppendLine($"\"{c.FullName}\",\"{c.Email}\",\"{c.Phone}\",{c.Orders},{c.TotalSpend},\"{c.Joined}\"");
+
+            var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+            return File(bytes, "text/csv", $"customers_{DateTime.UtcNow:yyyyMMdd}.csv");
         }
     }
 }

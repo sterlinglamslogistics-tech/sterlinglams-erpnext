@@ -3,11 +3,23 @@
     var isNew = Model.Id == 0;
 }
 
-<div class="flex items-center gap-3 mb-6">
-    <a asp-area="Admin" asp-controller="Products" asp-action="Index"
-       class="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">← Products</a>
-    <span class="text-neutral-200">/</span>
-    <span class="text-xs text-neutral-600">@(isNew ? "New Product" : Model.Name)</span>
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        <a asp-area="Admin" asp-controller="Products" asp-action="Index"
+           class="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">← Products</a>
+        <span class="text-neutral-200">/</span>
+        <span class="text-xs text-neutral-600">@(isNew ? "New Product" : Model.Name)</span>
+    </div>
+    @if (!isNew && !string.IsNullOrEmpty(Model.Slug))
+    {
+        <a href="/Products/@Model.Slug" target="_blank"
+           class="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-900 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            View on site
+        </a>
+    }
 </div>
 
 <div class="max-w-2xl">
@@ -164,6 +176,13 @@
                 <!-- Existing variants table -->
                 @if (Model.Variants.Any())
                 {
+                    var totalStock = Model.Variants.Where(v => v.IsActive).Sum(v => v.StockQuantity);
+                    <div class="flex items-center gap-4 mb-4 p-3 bg-neutral-50 rounded-sm text-xs text-neutral-600">
+                        <span><strong class="text-neutral-800">@Model.Variants.Count</strong> variants</span>
+                        <span><strong class="@(totalStock == 0 ? "text-red-600" : totalStock < 5 ? "text-amber-600" : "text-emerald-600")">@totalStock</strong> total stock (active variants)</span>
+                        <span class="text-neutral-400">@Model.Variants.Count(v => !v.IsActive) inactive</span>
+                    </div>
+
                     @* Forms must live outside the table — inputs/buttons reference them via form= attribute *@
                     @foreach (var v in Model.Variants)
                     {

@@ -263,6 +263,47 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Duplicate(int id)
+        {
+            var source = await _db.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.Id == id);
+            if (source == null) return NotFound();
+
+            var baseSlug = source.Slug + "-copy";
+            var slug = baseSlug;
+            int n = 1;
+            while (await _db.Products.AnyAsync(p => p.Slug == slug))
+                slug = $"{baseSlug}-{n++}";
+
+            var copy = new Product
+            {
+                Name             = source.Name + " (Copy)",
+                Slug             = slug,
+                ErpNextItemCode  = $"COPY-{Guid.NewGuid():N}"[..20],
+                Description      = source.Description,
+                ShortDescription = source.ShortDescription,
+                Price            = source.Price,
+                Metal            = source.Metal,
+                Weight           = source.Weight,
+                CategoryId       = source.CategoryId,
+                IsActive         = false,
+                IsFeatured       = false,
+                IsNewArrival     = source.IsNewArrival,
+                CreatedAt        = DateTime.UtcNow,
+                UpdatedAt        = DateTime.UtcNow,
+            };
+
+            foreach (var img in source.Images.OrderBy(i => i.SortOrder))
+                copy.Images.Add(new ProductImage { Url = img.Url, AltText = img.AltText, IsPrimary = img.IsPrimary, SortOrder = img.SortOrder });
+
+            _db.Products.Add(copy);
+            await _db.SaveChangesAsync();
+
+            TempData["Success"] = $"Product duplicated as '{copy.Name}'. It is inactive — edit and activate when ready.";
+            return RedirectToAction(nameof(Edit), new { id = copy.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id)
         {
             var product = await _db.Products.FindAsync(id);

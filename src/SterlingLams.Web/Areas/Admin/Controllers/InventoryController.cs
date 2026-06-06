@@ -83,6 +83,34 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdjustStock(int productId, int storeId, int adjustment, string reason = "Manual adjustment")
+        {
+            var inv = await _db.StoreInventories
+                .FirstOrDefaultAsync(si => si.ProductId == productId && si.StoreId == storeId);
+
+            if (inv == null)
+            {
+                // Create a new inventory record if one doesn't exist
+                var store = await _db.Stores.FindAsync(storeId);
+                if (store == null) return NotFound();
+                inv = new SterlingLams.Web.Models.Domain.StoreInventory
+                {
+                    ProductId = productId, StoreId = storeId, QuantityOnHand = 0
+                };
+                _db.StoreInventories.Add(inv);
+            }
+
+            inv.QuantityOnHand = Math.Max(0, inv.QuantityOnHand + adjustment);
+            inv.LastSyncedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            var sign = adjustment >= 0 ? "+" : "";
+            TempData["Success"] = $"Stock adjusted by {sign}{adjustment}. New quantity: {inv.QuantityOnHand}.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateThreshold(int productId, int threshold)
         {
             var product = await _db.Products.FindAsync(productId);

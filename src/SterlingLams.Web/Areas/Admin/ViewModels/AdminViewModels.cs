@@ -17,6 +17,8 @@ namespace SterlingLams.Web.Areas.Admin.ViewModels
         public List<RecentOrderRow> RecentOrders { get; set; } = new();
         public List<LowStockRow> LowStockItems { get; set; } = new();
         public List<DailyRevenueRow> DailyRevenue { get; set; } = new();
+        public List<TopProductRow> TopProducts { get; set; } = new();
+        public int ChartDays { get; set; } = 30;
     }
 
     public class DailyRevenueRow
@@ -41,6 +43,14 @@ namespace SterlingLams.Web.Areas.Admin.ViewModels
         public int Quantity { get; set; }
     }
 
+    public class TopProductRow
+    {
+        public string ProductName { get; set; } = "";
+        public string CategoryName { get; set; } = "";
+        public int UnitsSold { get; set; }
+        public decimal Revenue { get; set; }
+    }
+
     // ─── Orders ───────────────────────────────────────────────────────────
     public class AdminOrderListViewModel
     {
@@ -49,6 +59,7 @@ namespace SterlingLams.Web.Areas.Admin.ViewModels
         public string SearchQuery { get; set; } = "";
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; } = 1;
+        public Dictionary<string, int> StatusCounts { get; set; } = new();
     }
 
     public class AdminOrderRow
@@ -201,6 +212,12 @@ namespace SterlingLams.Web.Areas.Admin.ViewModels
         public List<AuditLogRow> Logs { get; set; } = new();
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; } = 1;
+        public string ActionFilter { get; set; } = "";
+        public string EntityFilter { get; set; } = "";
+        public string DateFrom { get; set; } = "";
+        public string DateTo { get; set; } = "";
+        public List<string> AvailableActions { get; set; } = new();
+        public List<string> AvailableEntities { get; set; } = new();
     }
 
     public class AuditLogRow
