@@ -86,7 +86,10 @@ public class AttributesController : AdminBaseController
         attr.IsActive  = vm.IsActive;
         attr.SortOrder = vm.SortOrder;
 
+        var isNew = vm.Id == 0;
         await _db.SaveChangesAsync();
+        await LogAsync(isNew ? "Create" : "Update", "Attribute", attr.Id.ToString(),
+            $"{(isNew ? "Created" : "Updated")} attribute '{attr.Name}'");
         TempData["Success"] = $"Attribute '{attr.Name}' saved.";
         return RedirectToAction(nameof(Edit), new { id = attr.Id });
     }
@@ -112,6 +115,7 @@ public class AttributesController : AdminBaseController
                 SortOrder   = maxSort + 1,
             });
             await _db.SaveChangesAsync();
+            await LogAsync("Update", "Attribute", id.ToString(), $"Added value '{value}' to '{attr.Name}'");
             TempData["Success"] = $"Value '{value}' added.";
         }
 
@@ -125,8 +129,10 @@ public class AttributesController : AdminBaseController
         var value = await _db.ProductAttributeValues.FindAsync(valueId);
         if (value != null && value.AttributeId == attributeId)
         {
+            var valName = value.Value;
             _db.ProductAttributeValues.Remove(value);
             await _db.SaveChangesAsync();
+            await LogAsync("Update", "Attribute", attributeId.ToString(), $"Removed value '{valName}'");
             TempData["Success"] = "Value removed.";
         }
         return RedirectToAction(nameof(Edit), new { id = attributeId });
@@ -139,9 +145,11 @@ public class AttributesController : AdminBaseController
         var attr = await _db.ProductAttributes.FindAsync(id);
         if (attr != null)
         {
+            var name = attr.Name;
             _db.ProductAttributes.Remove(attr);
             await _db.SaveChangesAsync();
-            TempData["Success"] = $"Attribute '{attr.Name}' deleted.";
+            await LogAsync("Delete", "Attribute", id.ToString(), $"Deleted attribute '{name}'");
+            TempData["Success"] = $"Attribute '{name}' deleted.";
         }
         return RedirectToAction(nameof(Index));
     }

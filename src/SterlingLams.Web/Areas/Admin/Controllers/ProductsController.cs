@@ -196,6 +196,9 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             }
 
             await _db.SaveChangesAsync();
+            if (created > 0)
+                await LogAsync("Update", "Product", id.ToString(),
+                    $"Generated {created} variant(s) for '{product.Name}'");
             TempData["Success"] = created > 0
                 ? $"{created} variant(s) generated."
                 : "All combinations already exist.";
@@ -231,6 +234,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             if (saved > 0)
             {
                 await _db.SaveChangesAsync();
+                await LogAsync("Update", "Product", productId.ToString(), $"Saved {saved} variant(s)");
                 TempData["Success"] = $"All {saved} variant(s) saved.";
             }
 
@@ -244,8 +248,10 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                 .FirstOrDefaultAsync(v => v.Id == variantId && v.ProductId == productId);
             if (variant != null)
             {
+                var vName = variant.Name;
                 _db.ProductVariants.Remove(variant);
                 await _db.SaveChangesAsync();
+                await LogAsync("Update", "Product", productId.ToString(), $"Deleted variant '{vName}'");
                 TempData["Success"] = "Variant deleted.";
             }
             return RedirectToAction(nameof(Edit), new { id = productId });
@@ -489,6 +495,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             });
 
             await _db.SaveChangesAsync();
+            await LogAsync("Update", "Product", id.ToString(), $"Added image to '{product.Name}'");
             TempData["Success"] = "Image added.";
             return RedirectToAction(nameof(Edit), new { id });
         }
@@ -502,6 +509,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             {
                 _db.ProductImages.Remove(image);
                 await _db.SaveChangesAsync();
+                await LogAsync("Update", "Product", productId.ToString(), "Removed a product image");
                 TempData["Success"] = "Image removed.";
             }
             return RedirectToAction(nameof(Edit), new { id = productId });

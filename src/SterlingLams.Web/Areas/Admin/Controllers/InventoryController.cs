@@ -194,6 +194,8 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             }
 
             await _db.SaveChangesAsync();
+            if (created > 0)
+                await LogAsync("Update", "Inventory", null, $"Created {created} missing inventory record(s)");
             TempData["Success"] = $"Created {created} missing inventory record(s). All products now appear in the grid.";
             return RedirectToAction(nameof(Index));
         }
@@ -205,6 +207,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             try
             {
                 await _inventory.SyncAllAsync();
+                await LogAsync("Update", "Inventory", null, "Synced inventory from ERPNext");
                 TempData["Success"] = "Inventory synced from ERPNext.";
             }
             catch (Exception ex)
@@ -225,6 +228,8 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             product.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
 
+            await LogAsync("Update", "Inventory", productId.ToString(),
+                $"Set low-stock threshold for '{product.Name}' to {threshold}");
             TempData["Success"] = $"Threshold for '{product.Name}' set to {threshold}.";
             return RedirectToAction(nameof(Index));
         }
