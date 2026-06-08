@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using SterlingLams.Web.Areas.Admin.ViewModels;
 using SterlingLams.Web.Data;
 using SterlingLams.Web.Models.Domain;
+using SterlingLams.Web.Services;
 using SterlingLams.Web.Services.Inventory;
 
 namespace SterlingLams.Web.Areas.Admin.Controllers
@@ -18,12 +19,14 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
 
         private readonly ApplicationDbContext _db;
         private readonly IInventoryService _inventory;
+        private readonly IStockService _stock;
         private const int PageSize = 30;
 
-        public InventoryController(ApplicationDbContext db, IInventoryService inventory)
+        public InventoryController(ApplicationDbContext db, IInventoryService inventory, IStockService stock)
         {
             _db = db;
             _inventory = inventory;
+            _stock = stock;
         }
 
         // ── Index: product-centric view (all stores as columns) ───────────────────
@@ -118,6 +121,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             if (product == null) return NotFound();
 
             var stores = await _db.Stores.Where(s => s.IsActive).ToListAsync();
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
             foreach (var store in stores)
             {
@@ -125,24 +129,12 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                 if (!form.TryGetValue(key, out var qtyStr)) continue;
                 if (!int.TryParse(qtyStr, out var qty) || qty < 0) continue;
 
-                var existing = await _db.StoreInventories
-                    .FirstOrDefaultAsync(si => si.ProductId == productId && si.StoreId == store.Id);
-
-                if (existing != null)
-                {
-                    existing.QuantityOnHand = qty;
-                    existing.LastSyncedAt   = DateTime.UtcNow;
-                }
-                else
-                {
-                    _db.StoreInventories.Add(new StoreInventory
-                    {
-                        ProductId      = productId,
-                        StoreId        = store.Id,
-                        QuantityOnHand = qty,
-                        LastSyncedAt   = DateTime.UtcNow,
-                    });
-                }
+                // Apply the change through the stock ledger so every restock is traceable.
+                var current = await _stock.GetStockAsync(productId, store.Id);
+                var delta = qty - current;
+                if (delta != 0)
+                    await _stock.ApplyAsync(productId, null, store.Id, delta,
+                        StockMovementType.Adjustment, "Stock update", userId: userId);
             }
 
             await _db.SaveChangesAsync();

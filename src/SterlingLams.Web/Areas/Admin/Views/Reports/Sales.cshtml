@@ -1,0 +1,77 @@
+@model SterlingLams.Web.Areas.Admin.Controllers.ReportsController.SalesVm
+@{ ViewData["Title"] = "Sales Report"; }
+
+@await Html.PartialAsync("_ReportTabs", "Sales")
+
+<form method="get" class="flex flex-wrap items-end gap-3 mb-6">
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">From</label>
+        <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="border border-neutral-200 rounded-sm px-3 py-1.5 text-sm" />
+    </div>
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">To</label>
+        <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="border border-neutral-200 rounded-sm px-3 py-1.5 text-sm" />
+    </div>
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">Branch</label>
+        <select name="storeId" class="border border-neutral-200 rounded-sm px-3 py-1.5 text-sm">
+            <option value="">All branches</option>
+            @foreach (var s in Model.Stores)
+            {
+                <option value="@s.Id" selected="@(Model.StoreId == s.Id)">@s.Name</option>
+            }
+        </select>
+    </div>
+    <button class="px-4 py-1.5 bg-neutral-900 text-white text-sm rounded-sm hover:bg-neutral-700 transition-colors">Apply</button>
+</form>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white border border-neutral-100 rounded-sm p-4">
+        <p class="text-xs text-neutral-400">Gross sales</p><p class="text-xl font-light text-neutral-900 mt-1">₦@Model.Gross.ToString("N0")</p>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-sm p-4">
+        <p class="text-xs text-neutral-400">Refunds</p><p class="text-xl font-light text-red-600 mt-1">₦@Model.Refunds.ToString("N0")</p>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-sm p-4">
+        <p class="text-xs text-neutral-400">Net</p><p class="text-xl font-light text-neutral-900 mt-1">₦@Model.Net.ToString("N0")</p>
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-sm p-4">
+        <p class="text-xs text-neutral-400">Transactions</p><p class="text-xl font-light text-neutral-900 mt-1">@Model.Count <span class="text-xs text-neutral-400">· avg ₦@Model.Avg.ToString("N0")</span></p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+    <div class="bg-white border border-neutral-100 rounded-sm p-5">
+        <h2 class="text-sm font-medium text-neutral-800 mb-3">By payment method</h2>
+        @if (!Model.ByPayment.Any()) { <p class="text-sm text-neutral-400">No sales in range.</p> }
+        @foreach (var p in Model.ByPayment)
+        {
+            <div class="flex justify-between text-sm py-1.5 border-b border-neutral-50 last:border-0"><span class="text-neutral-600">@p.Label</span><span class="text-neutral-800">₦@p.Amount.ToString("N0")</span></div>
+        }
+    </div>
+    <div class="bg-white border border-neutral-100 rounded-sm p-5">
+        <h2 class="text-sm font-medium text-neutral-800 mb-3">By branch</h2>
+        @if (!Model.ByBranch.Any()) { <p class="text-sm text-neutral-400">No sales in range.</p> }
+        @foreach (var b in Model.ByBranch)
+        {
+            <div class="flex justify-between text-sm py-1.5 border-b border-neutral-50 last:border-0"><span class="text-neutral-600">@b.Label <span class="text-neutral-400">(@b.Count)</span></span><span class="text-neutral-800">₦@b.Total.ToString("N0")</span></div>
+        }
+    </div>
+</div>
+
+<div class="bg-white border border-neutral-100 rounded-sm overflow-hidden">
+    <div class="px-4 py-2.5 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">Daily breakdown</div>
+    <table class="w-full text-sm">
+        <tbody class="divide-y divide-neutral-100">
+            @if (!Model.ByDay.Any()) { <tr><td class="px-4 py-8 text-center text-neutral-400">No sales in range.</td></tr> }
+            @foreach (var d in Model.ByDay)
+            {
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-2.5 text-neutral-700">@d.Day.ToString("ddd, dd MMM yyyy")</td>
+                    <td class="px-4 py-2.5 text-neutral-500 text-right">@d.Count sale(s)</td>
+                    <td class="px-4 py-2.5 text-neutral-800 text-right">₦@d.Total.ToString("N0")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
