@@ -29,6 +29,7 @@ namespace SterlingLams.Web.Areas.Admin.ViewModels
 
     public class RecentOrderRow
     {
+        public int Id { get; set; }
         public string OrderNumber { get; set; } = "";
         public string CustomerName { get; set; } = "";
         public decimal Total { get; set; }

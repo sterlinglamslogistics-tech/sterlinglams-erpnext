@@ -58,6 +58,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                     .Take(10)
                     .Select(o => new RecentOrderRow
                     {
+                        Id = o.Id,
                         OrderNumber = o.OrderNumber,
                         CustomerName = o.User.FullName,
                         Total = o.Total,
