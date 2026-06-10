@@ -76,6 +76,17 @@
             </select>
         </div>
 
+        <!-- Type -->
+        <div class="flex flex-col gap-1">
+            <label class="text-[10px] text-neutral-400 uppercase tracking-widest">Type</label>
+            <select name="type"
+                    class="border border-neutral-200 rounded-sm px-3 py-2 text-xs focus:outline-none focus:border-neutral-400 bg-white min-w-[130px]">
+                <option value="">All Types</option>
+                <option value="simple"   selected="@(Model.TypeFilter == "simple")">Simple</option>
+                <option value="variable" selected="@(Model.TypeFilter == "variable")">Variable</option>
+            </select>
+        </div>
+
         <!-- Price range -->
         <div class="flex flex-col gap-1">
             <label class="text-[10px] text-neutral-400 uppercase tracking-widest">Price (₦)</label>
@@ -265,6 +276,7 @@
         ["q"] = Model.SearchQuery ?? "",
         ["category"] = Model.CategoryFilter ?? "",
         ["status"] = Model.StatusFilter ?? "",
+        ["type"] = Model.TypeFilter ?? "",
         ["minPrice"] = Model.MinPrice?.ToString() ?? "",
         ["maxPrice"] = Model.MaxPrice?.ToString() ?? "",
     };

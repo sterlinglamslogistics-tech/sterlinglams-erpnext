@@ -32,7 +32,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
         }
 
         public async Task<IActionResult> Index(
-            string q = "", string category = "", string status = "",
+            string q = "", string category = "", string status = "", string type = "",
             decimal? minPrice = null, decimal? maxPrice = null, int page = 1)
         {
             ViewData["Title"] = "Products";
@@ -56,6 +56,11 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             if (maxPrice.HasValue)
                 query = query.Where(p => p.Price <= maxPrice.Value);
 
+            if (type == "variable")
+                query = query.Where(p => p.ProductType == "variable");
+            else if (type == "simple")
+                query = query.Where(p => p.ProductType != "variable");
+
             switch (status)
             {
                 case "active":   query = query.Where(p => p.IsActive);           break;
@@ -77,6 +82,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
                 SearchQuery         = q,
                 CategoryFilter      = category,
                 StatusFilter        = status,
+                TypeFilter          = type,
                 MinPrice            = minPrice,
                 MaxPrice            = maxPrice,
                 CurrentPage         = page,
