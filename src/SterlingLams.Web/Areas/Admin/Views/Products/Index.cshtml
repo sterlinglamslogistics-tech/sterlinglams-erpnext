@@ -193,7 +193,11 @@
                     <!-- Name -->
                     <td class="px-4 py-3">
                         <p class="text-xs font-medium text-neutral-800">@p.Name</p>
-                        <div class="flex gap-1 mt-0.5 flex-wrap">
+                        <div class="flex gap-1 mt-0.5 flex-wrap items-center">
+                            @if (p.Variants.Count > 0)
+                            {
+                                <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">@p.Variants.Count variant@(p.Variants.Count == 1 ? "" : "s")</span>
+                            }
                             @if (p.IsFeatured)   { <span class="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">Featured</span> }
                             @if (p.IsNewArrival) { <span class="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">New</span> }
                             @if (!string.IsNullOrEmpty(p.Sku)) { <span class="text-[9px] text-neutral-400 font-mono">@p.Sku</span> }

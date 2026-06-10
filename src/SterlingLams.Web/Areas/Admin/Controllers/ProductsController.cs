@@ -40,6 +40,7 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             var query = _db.Products
                 .Include(p => p.Category)
                 .Include(p => p.Images)          // ← images for thumbnails
+                .Include(p => p.Variants)        // ← for the variant-count badge
                 .AsQueryable();
 
             // ── Filters ──────────────────────────────────────────────────────
