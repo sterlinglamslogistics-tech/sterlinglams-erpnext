@@ -1,0 +1,165 @@
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using SterlingLams.Web.Data;
+using SterlingLams.Web.Models.Domain;
+
+namespace SterlingLams.Web.Areas.Inventory.Controllers;
+
+public class ProductsController : InventoryAreaController
+{
+    private readonly ApplicationDbContext _db;
+    private const int PageSize = 30;
+    public ProductsController(ApplicationDbContext db) => _db = db;
+
+    // List — search matches name, SKU OR barcode (so a scanner finds the product).
+    public async Task<IActionResult> Index(string q = "", int page = 1)
+    {
+        ViewData["Title"] = "Products";
+        var query = _db.Products.Include(p => p.Category).Include(p => p.Images).Where(p => p.IsActive == true || p.IsActive == false);
+
+        if (!string.IsNullOrWhiteSpace(q))
+            query = query.Where(p => EF.Functions.ILike(p.Name, $"%{q}%")
+                                  || EF.Functions.ILike(p.Sku ?? "", $"%{q}%")
+                                  || EF.Functions.ILike(p.Barcode ?? "", $"%{q}%"));
+
+        var total = await query.CountAsync();
+        var products = await query.OrderBy(p => p.Name)
+            .Skip((page - 1) * PageSize).Take(PageSize)
+            .Select(p => new InvProductRow
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Sku = p.Sku,
+                Barcode = p.Barcode,
+                Price = p.Price,
+                CategoryName = p.Category != null ? p.Category.Name : "—",
+                ImageUrl = p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault(),
+                IsActive = p.IsActive,
+                TotalStock = p.StoreInventories.Sum(si => (int?)si.QuantityOnHand) ?? 0
+            })
+            .ToListAsync();
+
+        ViewBag.Query = q;
+        ViewBag.Page = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(total / (double)PageSize);
+        ViewBag.Total = total;
+        return View(products);
+    }
+
+    public async Task<IActionResult> Edit(int id)
+    {
+        var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == id);
+        if (product == null) return NotFound();
+        ViewData["Title"] = "Edit Product";
+        await LoadCategories(product.CategoryId);
+        return View(product);
+    }
+
+    public async Task<IActionResult> Create()
+    {
+        ViewData["Title"] = "New Product";
+        await LoadCategories(null);
+        return View("Edit", new Product { IsActive = true, Currency = "NGN", LowStockThreshold = 3 });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Save(int id, string name, string? sku, string? barcode, decimal price,
+        int? categoryId, int lowStockThreshold, bool isActive, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name) || categoryId == null)
+        {
+            TempData["Error"] = string.IsNullOrWhiteSpace(name) ? "Name is required." : "Please choose a category.";
+            return RedirectToAction(id == 0 ? nameof(Create) : nameof(Edit), id == 0 ? null : new { id });
+        }
+
+        var isNew = id == 0;
+        var product = isNew ? new Product() : await _db.Products.FindAsync(id);
+        if (product == null) return NotFound();
+
+        product.Name = name.Trim();
+        product.Sku = string.IsNullOrWhiteSpace(sku) ? null : sku.Trim();
+        product.Barcode = string.IsNullOrWhiteSpace(barcode) ? null : barcode.Trim();
+        product.Price = price;
+        product.CategoryId = categoryId.Value;
+        product.LowStockThreshold = lowStockThreshold;
+        product.IsActive = isActive;
+        product.Description = description;
+        product.UpdatedAt = DateTime.UtcNow;
+
+        if (isNew)
+        {
+            product.Currency = "NGN";
+            product.ProductType = "simple";
+            product.ExternalCode = "";
+            product.CreatedAt = DateTime.UtcNow;
+            product.Slug = await UniqueSlugAsync(Slugify(name));
+            _db.Products.Add(product);
+        }
+
+        await _db.SaveChangesAsync();
+        await EnsureInventoryRecordsAsync(product.Id);
+        await LogAsync(isNew ? "Create" : "Update", "Product", product.Id.ToString(),
+            $"{(isNew ? "Created" : "Updated")} product '{product.Name}'" + (string.IsNullOrEmpty(product.Barcode) ? "" : $" (barcode {product.Barcode})"));
+
+        TempData["Success"] = $"'{product.Name}' saved.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // Look up a product by exact barcode (for scan boxes). Returns id/name or 404.
+    [HttpGet]
+    public async Task<IActionResult> Lookup(string barcode)
+    {
+        barcode = (barcode ?? "").Trim();
+        if (barcode.Length == 0) return Json(new { found = false });
+        var p = await _db.Products
+            .Where(x => x.Barcode == barcode || x.Sku == barcode)
+            .Select(x => new { x.Id, x.Name, x.Sku, x.Barcode })
+            .FirstOrDefaultAsync();
+        return p == null ? Json(new { found = false }) : Json(new { found = true, id = p.Id, name = p.Name });
+    }
+
+    private async Task LoadCategories(int? selected)
+    {
+        ViewBag.Categories = await _db.Categories.OrderBy(c => c.Name)
+            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name, Selected = c.Id == selected })
+            .ToListAsync();
+    }
+
+    private async Task EnsureInventoryRecordsAsync(int productId)
+    {
+        var storeIds = await _db.Stores.Where(s => s.IsActive).Select(s => s.Id).ToListAsync();
+        var existing = await _db.StoreInventories.Where(si => si.ProductId == productId).Select(si => si.StoreId).ToListAsync();
+        foreach (var sid in storeIds.Except(existing))
+            _db.StoreInventories.Add(new StoreInventory { ProductId = productId, StoreId = sid, QuantityOnHand = 0 });
+        await _db.SaveChangesAsync();
+    }
+
+    private static string Slugify(string s)
+    {
+        s = (s ?? "").ToLowerInvariant().Trim();
+        s = Regex.Replace(s, @"[^a-z0-9\s-]", "");
+        s = Regex.Replace(s, @"[\s-]+", "-").Trim('-');
+        return string.IsNullOrEmpty(s) ? "product" : s;
+    }
+    private async Task<string> UniqueSlugAsync(string baseSlug)
+    {
+        var slug = baseSlug; var n = 1;
+        while (await _db.Products.AnyAsync(p => p.Slug == slug)) slug = $"{baseSlug}-{++n}";
+        return slug;
+    }
+}
+
+public class InvProductRow
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? Sku { get; set; }
+    public string? Barcode { get; set; }
+    public decimal Price { get; set; }
+    public string CategoryName { get; set; } = "";
+    public string? ImageUrl { get; set; }
+    public bool IsActive { get; set; }
+    public int TotalStock { get; set; }
+}

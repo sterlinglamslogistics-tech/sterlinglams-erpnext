@@ -1,0 +1,70 @@
+@model SterlingLams.Web.Models.Domain.Product
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "New Product" : "Edit Product";
+    var categories = ViewBag.Categories as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+}
+
+<div class="flex items-center gap-3 mb-6">
+    <a asp-area="Inventory" asp-controller="Products" asp-action="Index" class="text-xs text-neutral-400 hover:text-neutral-700">← Products</a>
+    <span class="text-neutral-200">/</span>
+    <h1 class="text-lg font-medium text-neutral-800">@(isNew ? "New product" : Model.Name)</h1>
+</div>
+
+<form asp-area="Inventory" asp-controller="Products" asp-action="Save" method="post" class="max-w-xl bg-white border border-neutral-100 rounded-sm p-6 space-y-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">Name <span class="text-red-400">*</span></label>
+        <input name="name" value="@Model.Name" required class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs text-neutral-500 mb-1">SKU</label>
+            <input name="sku" value="@Model.Sku" class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-400" />
+        </div>
+        <div>
+            <label class="block text-xs text-neutral-500 mb-1">Barcode <span class="text-neutral-300">(scan or type)</span></label>
+            <input name="barcode" value="@Model.Barcode" autocomplete="off" placeholder="Scan the product…"
+                   class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-400" />
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs text-neutral-500 mb-1">Price (₦)</label>
+            <input name="price" type="number" step="0.01" min="0" value="@Model.Price" class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+        </div>
+        <div>
+            <label class="block text-xs text-neutral-500 mb-1">Low-stock threshold</label>
+            <input name="lowStockThreshold" type="number" min="0" value="@Model.LowStockThreshold" class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">Category</label>
+        <select name="categoryId" class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm bg-white">
+            <option value="">— None —</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c.Value" selected="@c.Selected">@c.Text</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label class="block text-xs text-neutral-500 mb-1">Description</label>
+        <textarea name="description" rows="3" class="w-full border border-neutral-200 rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-emerald-400 resize-none">@Model.Description</textarea>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm text-neutral-700">
+        <input type="checkbox" name="isActive" value="true" checked="@Model.IsActive" /> Active (visible & sellable)
+    </label>
+
+    <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="px-5 py-2 bg-emerald-600 text-white text-sm rounded-sm hover:bg-emerald-700 transition-colors">Save product</button>
+        <a asp-area="Inventory" asp-controller="Products" asp-action="Index" class="text-sm text-neutral-500 hover:text-neutral-700">Cancel</a>
+    </div>
+</form>

@@ -1,0 +1,74 @@
+@model List<SterlingLams.Web.Areas.Inventory.Controllers.InvProductRow>
+@{
+    ViewData["Title"] = "Products";
+    string q = ViewBag.Query ?? "";
+    int pg = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int total = ViewBag.Total ?? 0;
+}
+
+<div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
+    <form asp-area="Inventory" asp-controller="Products" asp-action="Index" method="get" class="flex gap-2">
+        <div class="relative">
+            <svg class="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h1m3 0h1m3 0h2m3 0h1M4 18h1m3 0h1m3 0h2m3 0h1M4 6v12M9 6v12M13 6v12M19 6v12"/></svg>
+            <input type="text" name="q" value="@q" autofocus autocomplete="off" placeholder="Scan barcode or search name / SKU…"
+                   class="w-80 border border-neutral-200 rounded-sm pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-emerald-400" />
+        </div>
+        <button type="submit" class="px-4 py-2 text-sm border border-neutral-200 rounded-sm hover:border-neutral-400">Search</button>
+    </form>
+    <a asp-area="Inventory" asp-controller="Products" asp-action="Create"
+       class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-sm hover:bg-emerald-700 transition-colors">+ New Product</a>
+</div>
+
+<p class="text-xs text-neutral-400 mb-3">@total product(s)@(string.IsNullOrEmpty(q) ? "" : $" matching “{q}”")</p>
+
+<div class="bg-white border border-neutral-100 rounded-sm overflow-x-auto">
+    <table class="w-full text-sm min-w-[760px]">
+        <thead class="bg-neutral-50 text-neutral-500 text-xs uppercase tracking-wide">
+            <tr>
+                <th class="px-4 py-3 w-12"></th>
+                <th class="text-left font-medium px-4 py-3">Name</th>
+                <th class="text-left font-medium px-4 py-3">Barcode</th>
+                <th class="text-left font-medium px-4 py-3">Category</th>
+                <th class="text-right font-medium px-4 py-3">Price</th>
+                <th class="text-right font-medium px-4 py-3">Stock</th>
+                <th class="text-center font-medium px-4 py-3">Status</th>
+                <th class="px-4 py-3"></th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-100">
+            @if (!Model.Any()) { <tr><td colspan="8" class="px-4 py-12 text-center text-neutral-400">No products found.</td></tr> }
+            @foreach (var p in Model)
+            {
+                <tr class="hover:bg-neutral-50">
+                    <td class="px-4 py-2">
+                        @if (!string.IsNullOrEmpty(p.ImageUrl)) { <img src="@p.ImageUrl" alt="" class="w-9 h-9 object-cover rounded-sm border border-neutral-100" onerror="this.style.display='none'" /> }
+                        else { <div class="w-9 h-9 rounded-sm bg-neutral-100"></div> }
+                    </td>
+                    <td class="px-4 py-3">
+                        <p class="text-xs text-neutral-800">@p.Name</p>
+                        @if (!string.IsNullOrEmpty(p.Sku)) { <p class="text-[10px] text-neutral-400 font-mono">@p.Sku</p> }
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs @(string.IsNullOrEmpty(p.Barcode) ? "text-amber-500" : "text-neutral-600")">@(string.IsNullOrEmpty(p.Barcode) ? "— none —" : p.Barcode)</td>
+                    <td class="px-4 py-3 text-xs text-neutral-500">@p.CategoryName</td>
+                    <td class="px-4 py-3 text-right text-xs text-neutral-700">₦@p.Price.ToString("N0")</td>
+                    <td class="px-4 py-3 text-right text-xs @(p.TotalStock == 0 ? "text-red-600" : "text-neutral-700")">@p.TotalStock</td>
+                    <td class="px-4 py-3 text-center">
+                        @if (p.IsActive) { <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Active</span> }
+                        else { <span class="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">Hidden</span> }
+                    </td>
+                    <td class="px-4 py-3 text-right"><a asp-area="Inventory" asp-controller="Products" asp-action="Edit" asp-route-id="@p.Id" class="text-xs text-emerald-600 hover:text-emerald-700">Edit</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <div class="flex items-center justify-center gap-1.5 mt-4 text-xs text-neutral-500">
+        <span>Page @pg of @totalPages</span>
+        @if (pg > 1) { <a asp-area="Inventory" asp-controller="Products" asp-action="Index" asp-route-q="@q" asp-route-page="@(pg-1)" class="px-3 py-1.5 border border-neutral-200 rounded-sm hover:border-neutral-400">‹ Prev</a> }
+        @if (pg < totalPages) { <a asp-area="Inventory" asp-controller="Products" asp-action="Index" asp-route-q="@q" asp-route-page="@(pg+1)" class="px-3 py-1.5 border border-neutral-200 rounded-sm hover:border-neutral-400">Next ›</a> }
+    </div>
+}
