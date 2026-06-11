@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -20,6 +21,20 @@ builder.Host.UseSerilog();
 // ─── Database ───────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ─── Data Protection ──────────────────────────────────────────────────────────
+// Persist keys so antiforgery tokens, auth cookies and other protected payloads survive
+// app restarts/redeploys and are shared across instances. Without this, keys are ephemeral
+// and every restart invalidates tokens/cookies (causing antiforgery failures and logouts).
+// Path is configurable (DataProtection:KeysPath); defaults to App_Data/dp-keys under the
+// content root. A fixed application name keeps keys valid even if the deploy path changes.
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (string.IsNullOrWhiteSpace(dpKeysPath))
+    dpKeysPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "dp-keys");
+Directory.CreateDirectory(dpKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("SterlingLams")
+    .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
 
 // ─── Identity ───────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
