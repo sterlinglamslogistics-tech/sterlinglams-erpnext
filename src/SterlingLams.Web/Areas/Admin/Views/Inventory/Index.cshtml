@@ -165,6 +165,15 @@ else
         </form>
     }
 
+    <!-- Bulk save bar -->
+    <div class="flex items-center justify-between mb-3">
+        <p class="text-[11px] text-neutral-400">Type quantities across the page, then save them all at once — or use the per-row Save.</p>
+        <button type="button" id="save-all-stock"
+                class="px-4 py-2 bg-neutral-900 text-white text-xs rounded-sm hover:bg-neutral-700 transition-colors">
+            Save all changes<span id="stock-change-count"></span>
+        </button>
+    </div>
+
     <!-- Inventory grid -->
     <div class="bg-white rounded-sm border border-neutral-100 overflow-x-auto">
         <table class="w-full text-sm min-w-[700px]">
@@ -234,14 +243,16 @@ else
                                     <input form="inv-@row.ProductId"
                                            type="number" name="store_@store.Id"
                                            placeholder="—" min="0"
-                                           class="w-16 text-center text-xs border border-neutral-200 rounded-sm px-2 py-1 focus:outline-none focus:border-neutral-400 bg-white" />
+                                           data-pid="@row.ProductId" data-sid="@store.Id" data-orig=""
+                                           class="stock-cell w-16 text-center text-xs border border-neutral-200 rounded-sm px-2 py-1 focus:outline-none focus:border-neutral-400 bg-white" />
                                 }
                                 else
                                 {
                                     <input form="inv-@row.ProductId"
                                            type="number" name="store_@store.Id"
                                            value="@qty" min="0"
-                                           class="w-16 text-center text-xs border border-neutral-200 rounded-sm px-2 py-1 focus:outline-none focus:border-neutral-400 bg-white
+                                           data-pid="@row.ProductId" data-sid="@store.Id" data-orig="@qty"
+                                           class="stock-cell w-16 text-center text-xs border border-neutral-200 rounded-sm px-2 py-1 focus:outline-none focus:border-neutral-400 bg-white
                                                   @(qty == 0 ? "text-red-600 border-red-200" : qty < row.LowStockThreshold ? "text-amber-600 border-amber-200" : "")" />
                                 }
                             </td>
@@ -305,4 +316,33 @@ else
             }
         </div>
     }
+
+    <script>
+    (function () {
+        const btn = document.getElementById('save-all-stock');
+        const countEl = document.getElementById('stock-change-count');
+        if (!btn) return;
+        const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+        const changed = () => [...document.querySelectorAll('input.stock-cell')]
+            .filter(i => i.value !== '' && i.value !== i.getAttribute('data-orig'));
+        const refresh = () => { const n = changed().length; countEl.textContent = n ? ' (' + n + ')' : ''; };
+        document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('stock-cell')) refresh(); });
+        refresh();
+        btn.addEventListener('click', async () => {
+            const edits = changed().map(i => ({ productId: +i.dataset.pid, storeId: +i.dataset.sid, quantity: +i.value }));
+            if (!edits.length) { alert('No changes to save.'); return; }
+            btn.disabled = true; const label = btn.querySelector('span') ? null : null; btn.textContent = 'Saving…';
+            try {
+                const res = await fetch('/Admin/Inventory/SetAllProductStock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': tokenEl ? tokenEl.value : '' },
+                    body: JSON.stringify(edits)
+                });
+                const data = await res.json();
+                if (data.success) { location.reload(); }
+                else { alert('Save failed.'); btn.disabled = false; btn.textContent = 'Save all changes'; }
+            } catch { alert('Save failed. Please try again.'); btn.disabled = false; btn.textContent = 'Save all changes'; }
+        });
+    })();
+    </script>
 }

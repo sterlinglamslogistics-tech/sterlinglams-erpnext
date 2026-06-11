@@ -150,6 +150,50 @@ namespace SterlingLams.Web.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index), new { q, category, stock, page });
         }
 
+        public class StockEdit
+        {
+            public int ProductId { get; set; }
+            public int StoreId { get; set; }
+            public int Quantity { get; set; }
+        }
+
+        // ── Bulk: set stock for many product×store cells at once (one "Save all") ─────
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetAllProductStock([FromBody] List<StockEdit> edits)
+        {
+            if (edits == null || edits.Count == 0)
+                return Json(new { success = true, count = 0 });
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var validStoreIds = (await _db.Stores.Where(s => s.IsActive).Select(s => s.Id).ToListAsync()).ToHashSet();
+            var validProductIds = (await _db.Products
+                .Where(p => edits.Select(e => e.ProductId).Distinct().Contains(p.Id))
+                .Select(p => p.Id).ToListAsync()).ToHashSet();
+
+            var applied = 0;
+            foreach (var e in edits)
+            {
+                if (e.Quantity < 0 || !validStoreIds.Contains(e.StoreId) || !validProductIds.Contains(e.ProductId))
+                    continue;
+
+                // Route every change through the ledger so each restock stays traceable.
+                var current = await _stock.GetStockAsync(e.ProductId, e.StoreId);
+                var delta = e.Quantity - current;
+                if (delta != 0)
+                {
+                    await _stock.ApplyAsync(e.ProductId, null, e.StoreId, delta,
+                        StockMovementType.Adjustment, "Bulk stock update", userId: userId);
+                    applied++;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+            if (applied > 0)
+                await LogAsync("Update", "Inventory", null, $"Bulk stock update — {applied} change(s)");
+
+            return Json(new { success = true, count = applied });
+        }
+
         // ── Ensure all product × store combinations have an inventory record ──────
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> EnsureInventoryRecords()
